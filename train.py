@@ -42,7 +42,7 @@ def get_arguments():
                         help='How many wav files to process at once. Default: ' + str(batch_size) + '.')
     parser.add_argument('--batch_size_test', type=int, default=batch_size_test,
                         help='Test batch size. Default: ' + str(batch_size_test) + '.')
-    parser.add_argument('--logdir', type=str, default="model_china_conservatory_of_music_rnn",
+    parser.add_argument('--logdir', type=str, default="model_china_conservatory_of_music",
                         help='Directory in which to store the logging '
                              'information for TensorBoard. '
                              'If the model already exists, it will restore '
@@ -148,9 +148,9 @@ def main():
             # Set predictor units if not manually set to correct class number; use two hidden layers
             if len(model_param['predictor_units']) != 1:
                 predictor_units = []
-                # First layer largest power of two less than encoder hidden state
+                # First layer largest power of two less than encoder hidden state = 256
                 predictor_units.append(2 ** int(math.log(param['cells_hidden'] - 1, 2)))
-                # Second layer smallest power of two larger than encoder hidden state
+                # Second layer smallest power of two larger than encoder hidden state = 8
                 predictor_units.append(2 ** int(math.log(num_classes, 2) + 1))
                 # Update value
                 model_param['predictor_units'] = [predictor_units]

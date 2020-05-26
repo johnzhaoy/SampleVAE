@@ -44,8 +44,8 @@
         "initial_s_offset": 1.0,
         "predictor_units": [],
         "dropout_keep_prob": 0.75,
-        "rnn_decoder": true,
-        "rnn_highway": true,
+        "rnn_decoder": false,
+        "rnn_highway": false,
         "feature_normalization": false
     }
 }

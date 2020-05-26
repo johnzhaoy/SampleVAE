@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-
+# 权重的初始化，用Xavier初始化
 def create_variable(name, shape):
     '''Create a convolution filter variable with the specified name and shape,
     and initialize it using Xavier initialition.'''
@@ -9,6 +9,7 @@ def create_variable(name, shape):
     return variable
 
 
+# 偏置的初始化，设0
 def create_bias_variable(name, shape):
     '''Create a bias variable with the specified name and shape and initialize
     it to zero.'''
@@ -29,7 +30,7 @@ def upsample2(value, name, output_shape):
         out = tf.image.resize_bilinear(value, size=size, align_corners=None, name=None)
         return out
 
-
+# 定义卷积层和池化层{max pooling}
 def two_d_conv(value, filter_, pool_kernel=[2, 2], name='two_d_conv'):
     out = tf.nn.conv2d(value, filter_, strides=[1, 1, 1, 1], padding='SAME')
     out = tf.contrib.layers.max_pool2d(out, pool_kernel)
@@ -37,6 +38,7 @@ def two_d_conv(value, filter_, pool_kernel=[2, 2], name='two_d_conv'):
     return out
 
 
+# 定义反卷积层和反池化层
 def two_d_deconv(value, filter_, deconv_shape, pool_kernel=[2, 2], name='two_d_conv'):
     out = upsample2(value, 'unpool', deconv_shape)
     # print(out)
@@ -89,7 +91,9 @@ class VAEModel(object):
         self.activation_conv = activation_conv
         self.activation_nf = activation_nf
         self.encode = encode
+        # 4层编码层
         self.layers_enc = len(param['conv_channels'])
+        # 4层解码层
         self.layers_dec = self.layers_enc
         # TODO: Conv out shape cannot be hardcoded here
         if self.param['sample_sec'] == 2:
@@ -98,13 +102,18 @@ class VAEModel(object):
             self.conv_out_shape = [7, 57]
         else:
             raise Exception(f"No convolution out-shape pre-defined for {self.param['sample_sec']} sample length!")
+        # param['conv_channels'][-1]表示conc_channels的最后一位，即32
+        # 所以这句话是指7*7*32=1568个神经元，是卷积层的输出
         self.conv_out_units = self.conv_out_shape[0] * self.conv_out_shape[1] * param['conv_channels'][-1]
+        # 512个隐藏神经元
         self.cells_hidden = param['cells_hidden']
+        # 64位隐层神经元
         self.dim_latent = param['dim_latent']
         if "dim_latent_cat" in self.param.keys():
             for n_dims in self.param['dim_latent_cat']:
                 if n_dims > 0:
                     self.dim_latent += n_dims
+        # 加入rnn网络
         if 'rnn_decoder' in param.keys():
             self.rnn_decoder = param['rnn_decoder']
         else:
@@ -130,28 +139,32 @@ class VAEModel(object):
 
                 var['encoder_conv'] = list()
                 with tf.variable_scope('conv_stack'):
-
+                    # 对于每一层编码
                     for l in range(self.layers_enc):
 
                         with tf.variable_scope('layer{}'.format(l)):
                             current = dict()
-
+                            # 第一层时，输入为1
                             if l == 0:
                                 channels_in = 1
                             else:
+                                # 其他层，输入分别为32，64，32
                                 channels_in = self.param['conv_channels'][l - 1]
+                            # 每一层的输出分别是32，64，32
                             channels_out = self.param['conv_channels'][l]
 
                             current['filter'] = create_variable("filter",
                                                                 [3, 3, channels_in, channels_out])
                             #                             current['bias'] = create_bias_variable("bias",
                             #                                               [channels_out])
+                            # 把当前卷积层加入网络
                             var['encoder_conv'].append(current)
 
+                # 对于全连接层
                 with tf.variable_scope('fully_connected'):
 
                     layer = dict()
-
+                    # 隐藏神经元数目
                     num_cells_hidden = self.cells_hidden
 
                     if "cells_hidden_cat" in self.param.keys():
@@ -197,6 +210,7 @@ class VAEModel(object):
                         category_layers = list()
 
                         # Hidden layers
+                        # predictor_units=[256, 8]
                         for l in range(len(self.param['predictor_units'][c]) + 1):
                             with tf.variable_scope('layer{}'.format(l)):
 
@@ -345,17 +359,21 @@ class VAEModel(object):
         # Do encoder calculation
         encoder_hidden = input_batch
         # print('Encoder hidden state 0: ', encoder_hidden)
+        # layers_enc是卷积+池化的层数
         for l in range(self.layers_enc):
             # print(encoder_hidden)
+            # 加入一层卷积+池化层
             encoder_hidden = two_d_conv(encoder_hidden, self.variables['encoder_conv'][l]['filter'],
                                         self.param['max_pooling'][l])
+            # 加入神经网络的激活函数 elu
             encoder_hidden = self.activation_conv(encoder_hidden)
 
             # print(f'Encoder hidden state {l}: ', encoder_hidden)
-
+        # 将音乐转化成2D的tensor
         encoder_hidden = tf.reshape(encoder_hidden, [-1, self.conv_out_units])
 
         # Additional non-linearity between encoder hidden state and prediction of mu_0,sigma_0
+        # 运用dropout, 75%保留
         mu_logvar_hidden = tf.nn.dropout(self.activation(tf.matmul(encoder_hidden,
                                                                    self.variables['encoder_fc']['W_z0'])
                                                          + self.variables['encoder_fc']['b_z0']),
@@ -487,7 +505,7 @@ class VAEModel(object):
 
         # print(decoder_hidden)
 
-        # Reshape
+        # Reshape 将音乐转化成4D的tensor
         decoder_hidden = tf.reshape(decoder_hidden, [-1, self.conv_out_shape[0], self.conv_out_shape[1],
                                                      self.param['conv_channels'][-1]])
 
