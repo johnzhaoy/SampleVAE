@@ -13,9 +13,9 @@ def get_arguments():
         return {'true': True, 'false': False}[s.lower()]
 
     parser = argparse.ArgumentParser(description='Find all wav, aiff, and mp3 files and create dataset file.')
-    parser.add_argument('--data_dir', type=str,
+    parser.add_argument('--data_dir', type=str, default="F:\My_Stuff\Tongji\Graduation\Thesis\Database\Samples\Preprocessed\Music",
                         help='Root directory(s) in which to look for samples. Samples can be in nested directories.')
-    parser.add_argument('--dataset_name', type=str,
+    parser.add_argument('--dataset_name', type=str, default="china_conservatory_of_music",
                         help='Root directory in which to look for samples. Samples can be in nested directories.')
     parser.add_argument('--train_ratio', type=float, default=0.9,
                         help='Percentage of (randomly chosen) files to use for training. Remaining ones are validation.')

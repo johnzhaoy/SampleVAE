@@ -42,12 +42,12 @@ def get_arguments():
                         help='How many wav files to process at once. Default: ' + str(batch_size) + '.')
     parser.add_argument('--batch_size_test', type=int, default=batch_size_test,
                         help='Test batch size. Default: ' + str(batch_size_test) + '.')
-    parser.add_argument('--logdir', type=str, default=None,
+    parser.add_argument('--logdir', type=str, default="model_china_conservatory_of_music_rnn",
                         help='Directory in which to store the logging '
                              'information for TensorBoard. '
                              'If the model already exists, it will restore '
                              'the state and will continue training. ')
-    parser.add_argument('--dataset', type=str, default=None,
+    parser.add_argument('--dataset', type=str, default="china_conservatory_of_music",
                         help='Dataset to use for training. Only specify when initialising new model training.'
                              'If none specified, will try to use dataset in params.json file.')
     parser.add_argument('--featdir', type=str, default='./features',
