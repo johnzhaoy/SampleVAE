@@ -96,8 +96,17 @@ class VAEModel(object):
         # 4层解码层
         self.layers_dec = self.layers_enc
         # TODO: Conv out shape cannot be hardcoded here
+        # 这里只有2秒和15秒是自带的
         if self.param['sample_sec'] == 2:
             self.conv_out_shape = [7, 7]
+        elif self.param['sample_sec'] == 4:
+            self.conv_out_shape = [7, 17]
+        elif self.param['sample_sec'] == 7:
+            self.conv_out_shape = [7, 27]
+        elif self.param['sample_sec'] == 9:
+            self.conv_out_shape = [7, 37]
+        elif self.param['sample_sec'] == 12:
+            self.conv_out_shape = [7, 47]
         elif self.param['sample_sec'] == 15:
             self.conv_out_shape = [7, 57]
         else:
@@ -358,19 +367,23 @@ class VAEModel(object):
 
         # Do encoder calculation
         encoder_hidden = input_batch
+        print("input batch: " + encoder_hidden)
         # print('Encoder hidden state 0: ', encoder_hidden)
         # layers_enc是卷积+池化的层数
         for l in range(self.layers_enc):
-            # print(encoder_hidden)
             # 加入一层卷积+池化层
             encoder_hidden = two_d_conv(encoder_hidden, self.variables['encoder_conv'][l]['filter'],
                                         self.param['max_pooling'][l])
             # 加入神经网络的激活函数 elu
+
+            print(encoder_hidden)
             encoder_hidden = self.activation_conv(encoder_hidden)
 
-            # print(f'Encoder hidden state {l}: ', encoder_hidden)
+            print(f'Encoder hidden state {l}: ', encoder_hidden)
         # 将音乐转化成2D的tensor
+        print(encoder_hidden)
         encoder_hidden = tf.reshape(encoder_hidden, [-1, self.conv_out_units])
+        print(encoder_hidden)
 
         # Additional non-linearity between encoder hidden state and prediction of mu_0,sigma_0
         # 运用dropout, 75%保留
